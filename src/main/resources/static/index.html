@@ -1,0 +1,140 @@
+!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <title>Welcome to Computer Science Department!</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+<form id="addCourseForm" action="/create" method="POST">
+    <p>Let's add a new course.</p>
+
+    <div>
+        <label for="courseName">Course name:</label>
+        <input name="name" id="courseName" value="">
+    </div>
+    <div>
+        <label for="courseDescription">Course description:</label>
+        <input name="description" id="courseDescription" value="">
+    </div>
+    <div>
+        <button type="submit">Add course</button>
+    </div>
+</form>
+
+<form id="listAllCoursesForm">
+    <button type="button" onclick="listAllCourses()">List all courses</button>
+</form>
+
+<div id="courseTableContainer"></div>
+
+<form id="deleteCourseForm">
+    <div>
+        <label for="deleteCourseId">Enter course ID to delete:</label>
+        <input type="text" name="id" id="deleteCourseId" value="">
+    </div>
+    <button type="button" onclick="deleteCourse()">Delete course</button>
+</form>
+
+
+<form id="updateCourseForm">
+    <div>
+        <label for="updateCourseId">Enter course ID to update:</label>
+        <input type="text" name="id" id="updateCourseId" value="">
+    </div>
+    <div>
+        <label for="updatedCourseName">Updated course name:</label>
+        <input type="text" name="name" id="updatedCourseName" value="">
+    </div>
+    <div>
+        <label for="updatedCourseDescription">Updated course description:</label>
+        <input type="text" name="description" id="updatedCourseDescription" value="">
+    </div>
+    <button type="button" onclick="updateCourse()">Update course</button>
+</form>
+
+
+
+
+<script>
+    function listAllCourses() {
+        fetch("http://localhost:8080/read")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.length === 0) {
+                    document.getElementById("courseTableContainer").innerHTML = "<p>No courses found.</p>";
+                    return;
+                }
+                var table = "<table border='1'><tr><th>ID</th><th>Name</th><th>Description</th></tr>";
+                data.forEach(course => {
+                    table += "<tr><td>" + course.id + "</td><td>" + course.name + "</td><td>" + course.description + "</td></tr>";
+                });
+                table += "</table>";
+                document.getElementById("courseTableContainer").innerHTML = table;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    function deleteCourse() {
+        var courseId = document.getElementById("deleteCourseId").value;
+        var url = "http://localhost:8080/delete/" + courseId;
+
+        fetch(url, {
+            method: "DELETE"
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Course not found');
+                }
+                return response.text();
+            })
+            .then(data => {
+                console.log(data); // Handle the response from the server
+                listAllCourses(); // Update the table after deleting
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById("courseTableContainer").innerHTML = "<p>The course with the given ID does not exist or there was a problem deleting it.</p>";
+            });
+    }
+
+
+    function updateCourse() {
+        var courseId = document.getElementById("updateCourseId").value;
+        var updatedCourseName = document.getElementById("updatedCourseName").value;
+        var updatedCourseDescription = document.getElementById("updatedCourseDescription").value;
+        var url = "http://localhost:8080/update/" + courseId;
+
+        var formData = new FormData();
+        formData.append("name", updatedCourseName);
+        formData.append("description", updatedCourseDescription);
+
+        fetch(url, {
+            method: "PUT",
+            body: formData
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Course not found');
+                }
+                return response.text();
+            })
+            .then(data => {
+                console.log(data); // Handle the response from the server
+                listAllCourses(); // Update the table after updating
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById("courseTableContainer").innerHTML = "<p>The course with the given ID does not exist.</p>";
+            });
+    }
+</script>
+
+</body>
+</html>
